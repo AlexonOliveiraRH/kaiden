@@ -17,12 +17,15 @@
  ***********************************************************************/
 
 import type { ExtensionContext } from '@openkaiden/api';
+import { openshell } from '@openkaiden/api';
 import { beforeEach, expect, test, vi } from 'vitest';
 
 import { activate, deactivate } from './extension';
 import { VertexAi } from './vertex-ai';
 
+vi.mock(import('@openkaiden/api'));
 vi.mock(import('./vertex-ai'));
+vi.mock('./google-vertex-ai.yaml?raw', () => ({ default: 'id: google-vertex-ai\ndisplay_name: Google Vertex AI\n' }));
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -37,7 +40,18 @@ test('should initialize and activate the VertexAi extension', async () => {
   await activate(extensionContextMock);
 
   expect(VertexAi.prototype.init).toHaveBeenCalled();
-  expect(extensionContextMock.subscriptions).toHaveLength(1);
+  expect(extensionContextMock.subscriptions).toHaveLength(2);
+});
+
+test('activate registers openshell profile', async () => {
+  const extensionContextMock = {
+    subscriptions: [],
+    secrets: {},
+  } as unknown as ExtensionContext;
+
+  await activate(extensionContextMock);
+
+  expect(openshell.registerProfile).toHaveBeenCalledWith(expect.any(String));
 });
 
 test('should call deactivate without errors', async () => {

@@ -17,8 +17,10 @@
  ***********************************************************************/
 
 import type { AgentWorkspaceContext, ExtensionContext } from '@openkaiden/api';
-import { agents } from '@openkaiden/api';
+import { agents, openshell } from '@openkaiden/api';
 import { z } from 'zod';
+
+import copilotProfileYaml from './copilot.yaml?raw';
 
 function jsonCodec<T extends z.ZodType>(schema: T): z.ZodCodec<z.ZodString, T> {
   return z.codec(z.string(), schema, {
@@ -203,6 +205,8 @@ export async function activate(extensionContext: ExtensionContext): Promise<void
     },
   });
   extensionContext.subscriptions.push(disposable);
+
+  extensionContext.subscriptions.push(openshell.registerProfile(copilotProfileYaml));
 }
 
 export function deactivate(): void {}

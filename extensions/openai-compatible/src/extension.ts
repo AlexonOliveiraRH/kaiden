@@ -17,9 +17,10 @@
  ***********************************************************************/
 
 import type { ExtensionContext } from '@openkaiden/api';
-import { configuration, provider } from '@openkaiden/api';
+import { configuration, openshell, provider } from '@openkaiden/api';
 
 import { OpenAI } from './openAI';
+import openaiProfileYaml from './openai.yaml?raw';
 
 export async function activate(extensionContext: ExtensionContext): Promise<void> {
   console.log('starting openAI extension');
@@ -28,6 +29,8 @@ export async function activate(extensionContext: ExtensionContext): Promise<void
   extensionContext.subscriptions.push(openai);
 
   await openai.init();
+
+  extensionContext.subscriptions.push(openshell.registerProfile(openaiProfileYaml));
 }
 
 export function deactivate(): void {

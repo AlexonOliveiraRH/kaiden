@@ -17,7 +17,7 @@
  ***********************************************************************/
 
 import type { AgentConfigurationFile, AgentWorkspaceContext, Disposable, ExtensionContext } from '@openkaiden/api';
-import { agents } from '@openkaiden/api';
+import { agents, openshell } from '@openkaiden/api';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { CursorExtension } from './cursor-extension';
@@ -25,6 +25,7 @@ import { activate, CURSOR_CLI_CONFIG_PATH } from './extension';
 
 vi.mock(import('@openkaiden/api'));
 vi.mock(import('./cursor-extension'));
+vi.mock('./cursor.yaml?raw', () => ({ default: 'id: cursor\ndisplay_name: Cursor\n' }));
 
 const AGENT_DISPOSABLE_MOCK: Disposable = { dispose: vi.fn() };
 
@@ -70,6 +71,12 @@ describe('activate', () => {
     await activate(extensionContextMock);
 
     expect(extensionContextMock.subscriptions).toContain(AGENT_DISPOSABLE_MOCK);
+  });
+
+  test('registers openshell profile', async () => {
+    await activate(extensionContextMock);
+
+    expect(openshell.registerProfile).toHaveBeenCalledWith(expect.any(String));
   });
 
   test('registered agent supports only cursor model type', async () => {

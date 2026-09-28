@@ -17,25 +17,26 @@
  ***********************************************************************/
 
 import type { ExtensionContext } from '@openkaiden/api';
-import { configuration, openshell, provider } from '@openkaiden/api';
+import { openshell } from '@openkaiden/api';
+import { beforeEach, expect, test, vi } from 'vitest';
 
-import vertexAiProfileYaml from './google-vertex-ai.yaml?raw';
-import { VertexAi } from './vertex-ai';
+import { activate } from './extension';
 
-let vertexAi: VertexAi | undefined;
+vi.mock(import('@openkaiden/api'));
+vi.mock(import('./openAI'));
+vi.mock('./openai.yaml?raw', () => ({ default: 'id: openai\ndisplay_name: OpenAI\n' }));
 
-export async function activate(extensionContext: ExtensionContext): Promise<void> {
-  console.log('starting vertex-ai extension');
+beforeEach(() => {
+  vi.resetAllMocks();
+});
 
-  vertexAi = new VertexAi(provider, extensionContext.secrets, configuration);
-  extensionContext.subscriptions.push(vertexAi);
+test('activate registers openshell profile', async () => {
+  const extensionContextMock = {
+    subscriptions: [],
+    secrets: {},
+  } as unknown as ExtensionContext;
 
-  await vertexAi.init();
+  await activate(extensionContextMock);
 
-  extensionContext.subscriptions.push(openshell.registerProfile(vertexAiProfileYaml));
-}
-
-export function deactivate(): void {
-  console.log('stopping vertex-ai extension');
-  vertexAi = undefined;
-}
+  expect(openshell.registerProfile).toHaveBeenCalledWith(expect.any(String));
+});

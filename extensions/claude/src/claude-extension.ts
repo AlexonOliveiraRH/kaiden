@@ -17,13 +17,15 @@
  ***********************************************************************/
 
 import type { AgentWorkspaceContext, Disposable, ExtensionContext } from '@openkaiden/api';
-import { agents, provider } from '@openkaiden/api';
+import { agents, openshell, provider } from '@openkaiden/api';
 import type { Container } from 'inversify';
 import { z } from 'zod';
 
 import { InversifyBinding } from '/@/inject/inversify-binding';
 import { ClaudeInferenceManager } from '/@/manager/claude-inference-manager';
 import { ClaudeSkillsManager } from '/@/manager/claude-skills-manager';
+
+import anthropicProfileYaml from './anthropic.yaml?raw';
 
 export const PROVIDER_ID = 'claude';
 export const CLAUDE_SETTINGS_PATH = '.claude/settings.json';
@@ -224,6 +226,8 @@ export class ClaudeExtension {
 
     await this.#claudeSkillsManager?.init();
     await this.#claudeInferenceManager?.init();
+
+    this.#extensionContext.subscriptions.push(openshell.registerProfile(anthropicProfileYaml));
   }
 
   protected getContainer(): Container | undefined {

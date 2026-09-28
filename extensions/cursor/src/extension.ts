@@ -17,9 +17,10 @@
  ***********************************************************************/
 
 import type { AgentWorkspaceContext, ExtensionContext } from '@openkaiden/api';
-import { agents } from '@openkaiden/api';
+import { agents, openshell } from '@openkaiden/api';
 import { z } from 'zod';
 
+import cursorProfileYaml from './cursor.yaml?raw';
 import { CursorExtension } from './cursor-extension';
 
 export const CURSOR_CLI_CONFIG_PATH = '.cursor/cli-config.json';
@@ -86,6 +87,8 @@ export async function activate(extensionContext: ExtensionContext): Promise<void
     },
   });
   extensionContext.subscriptions.push(disposable);
+
+  extensionContext.subscriptions.push(openshell.registerProfile(cursorProfileYaml));
 }
 
 export async function deactivate(): Promise<void> {
