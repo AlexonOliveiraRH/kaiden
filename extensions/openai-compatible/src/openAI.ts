@@ -125,7 +125,24 @@ export class OpenAI implements Disposable {
         Authorization: `Bearer ${token}`,
       },
     });
-    if (res.status !== 200) throw new Error('failed to list models');
+    if (res.status !== 200) {
+      let serverMessage: string | undefined;
+      try {
+        const errorBody = (await res.json()) as { error?: { message?: string } };
+        serverMessage = errorBody.error?.message;
+      } catch {
+        // response body is not JSON
+      }
+
+      switch (res.status) {
+        case 401:
+          throw new Error(serverMessage ?? 'Incorrect API key — the server rejected the credentials (HTTP 401)');
+        case 403:
+          throw new Error(serverMessage ?? `Access denied — the server rejected the request (HTTP 403)`);
+        default:
+          throw new Error(serverMessage ?? `Unexpected error: ${res.status} ${res.statusText}`);
+      }
+    }
     const body = await res.json();
 
     if (!('data' in body)) throw new Error(`malformed response from ${baseURL}`);
@@ -160,20 +177,24 @@ export class OpenAI implements Disposable {
     id,
     token,
     baseURL,
+    models: preloadedModels,
   }: {
     id: string;
     token: string;
     baseURL: string;
+    models?: InferenceModel[];
   }): Promise<void> {
     if (!this.provider) throw new Error('cannot create MCP provider connection: provider is not initialized');
 
-    let models: InferenceModel[] = [];
+    let models: InferenceModel[] = preloadedModels ?? [];
     let status: ProviderConnectionStatus = 'unknown';
 
-    try {
-      models = await this.listModels(baseURL, token);
-    } catch (err: unknown) {
-      status = 'stopped';
+    if (!preloadedModels) {
+      try {
+        models = await this.listModels(baseURL, token);
+      } catch (err: unknown) {
+        status = 'stopped';
+      }
     }
 
     const openai = createOpenAICompatible({
@@ -245,8 +266,9 @@ export class OpenAI implements Disposable {
     }
 
     const id = randomUUID();
+    const models = await this.listModels(baseURL, apiKey);
+    await this.registerInferenceProviderConnection({ id, token: apiKey, baseURL, models });
     await this.saveConnection({ id, apiKey, baseURL });
-    await this.registerInferenceProviderConnection({ id, token: apiKey, baseURL });
   }
 
   dispose(): void {
